@@ -28,6 +28,12 @@ $ pnpm install
 7. Download the JSON file.
 8. Rename the file to `firebase-admin.json` and place it in the root directory of the project.
 
+Copy .env.template to .env and fill in the values.
+
+```bash
+cp .env.example .env
+```
+
 ## Compile and run the project
 
 ```bash
