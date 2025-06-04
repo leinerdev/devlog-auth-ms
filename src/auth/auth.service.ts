@@ -4,9 +4,13 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 import { FirestoreService } from 'src/firestore/firestore.service';
+
 import { SignInRequestDto } from './dto/sign-in-request.dto';
 import { SignInResponseDto } from './dto/sign-in-response.dto';
 import { SignUpRequestDto } from './dto/sign-up-request.dto';
+
+import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -26,11 +30,11 @@ export class AuthService {
       const { email, password } = signInRequest;
 
       // Verify if user exists
-      const user = await this.firestoreService.getDocumentByCriteria(
+      const user: User = (await this.firestoreService.getDocumentByCriteria(
         this.usersCollection,
         'email',
         email,
-      );
+      )) as unknown as User;
       if (!user) {
         throw new BadRequestException('User does not exist.');
       }
@@ -42,9 +46,11 @@ export class AuthService {
       }
 
       // Generate JWT token
-      const payload = {
+      const payload: JwtPayload = {
+        sub: user.id,
         email,
-        password,
+        password: user.password,
+        role: user.role,
       };
       const token = this.jwtService.sign(payload);
 
@@ -66,11 +72,12 @@ export class AuthService {
       const { email, password, name } = signUpRequest;
 
       // Verify if users exists
-      const existingUser = await this.firestoreService.getDocumentByCriteria(
-        this.usersCollection,
-        'email',
-        email,
-      );
+      const existingUser: User =
+        (await this.firestoreService.getDocumentByCriteria(
+          this.usersCollection,
+          'email',
+          email,
+        )) as unknown as User;
       if (existingUser) {
         throw new BadRequestException('User already exists.');
       }
