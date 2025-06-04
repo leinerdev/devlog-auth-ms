@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Body, Controller, Req, UseGuards } from '@nestjs/common';
+import { MessagePattern } from '@nestjs/microservices';
 
 import { GenericResponseDto } from 'src/common/dto/generic-response.dto';
 
@@ -17,24 +17,14 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('sign-in')
-  @ApiOperation({ summary: 'Sign in user' })
-  @ApiResponse({
-    status: 200,
-    description: 'User signed in successfully',
-  })
+  @MessagePattern({ cmd: 'auth_sign_in' })
   public signIn(
     @Body() signInRequest: SignInRequestDto,
   ): Promise<GenericResponseDto<AuthDataResponseDto>> {
     return this.authService.signIn(signInRequest);
   }
 
-  @Post('sign-up')
-  @ApiOperation({ summary: 'Sign up user' })
-  @ApiResponse({
-    status: 201,
-    description: 'User created successfully',
-  })
+  @MessagePattern({ cmd: 'auth_sign_up' })
   public signUp(
     @Body() signUpRequest: SignUpRequestDto,
   ): Promise<GenericResponseDto<AuthDataResponseDto>> {
@@ -42,13 +32,7 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('me')
-  @ApiOperation({ summary: 'Get user information by JWT token' })
-  @ApiResponse({
-    status: 200,
-    description: 'User information',
-  })
-  @ApiBearerAuth('JWT Auth Token')
+  @MessagePattern({ cmd: 'auth_me' })
   public getUser(@Req() request: Request): Promise<GenericResponseDto<User>> {
     const userPayload = request['user'] as unknown as JwtPayload;
     return this.authService.me(userPayload);

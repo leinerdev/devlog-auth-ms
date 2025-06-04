@@ -1,11 +1,24 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  if (!process.env.PORT) {
+    throw new Error('PORT environment variable is not set');
+  }
+
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
+    AppModule,
+    {
+      transport: Transport.TCP,
+      options: {
+        host: '127.0.0.1',
+        port: Number(process.env.PORT),
+      },
+    },
+  );
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -14,32 +27,7 @@ async function bootstrap() {
     }),
   );
 
-  const config = new DocumentBuilder()
-    .setTitle('DeVlog - Authentication Microservice')
-    .setDescription(
-      'Authentication Microservice for DeVlog, a social media platform made by developers for developers.',
-    )
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        name: 'Authorization',
-        description: 'Enter JWT Auth Token in the field',
-        in: 'header',
-      },
-      'JWT Auth Token',
-    )
-    .setVersion('1.0')
-    .build();
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, documentFactory);
-
-  if (!process.env.PORT) {
-    throw new Error('PORT environment variable is not set');
-  }
-
-  await app.listen(process.env.PORT);
+  await app.listen();
 }
 
 void bootstrap();
