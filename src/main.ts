@@ -19,6 +19,17 @@ async function bootstrap() {
     .setDescription(
       'Authentication Microservice for DeVlog, a social media platform made by developers for developers.',
     )
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        description: 'Enter JWT Auth Token in the field',
+        in: 'header',
+      },
+      'JWT Auth Token',
+    )
     .setVersion('1.0')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);

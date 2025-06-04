@@ -1,10 +1,17 @@
-import { Body, Controller, Post } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+
+import { GenericResponseDto } from 'src/common/dto/generic-response.dto';
 
 import { AuthService } from './auth.service';
+
 import { SignInRequestDto } from './dto/sign-in-request.dto';
 import { SignUpRequestDto } from './dto/sign-up-request.dto';
-import { SignInResponseDto } from './dto/sign-in-response.dto';
+import { AuthDataResponseDto } from './dto/auth-data-response.dto';
+
+import { User } from './entities/user.entity';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -18,7 +25,7 @@ export class AuthController {
   })
   public signIn(
     @Body() signInRequest: SignInRequestDto,
-  ): Promise<SignInResponseDto> {
+  ): Promise<GenericResponseDto<AuthDataResponseDto>> {
     return this.authService.signIn(signInRequest);
   }
 
@@ -30,7 +37,20 @@ export class AuthController {
   })
   public signUp(
     @Body() signUpRequest: SignUpRequestDto,
-  ): Promise<SignInResponseDto> {
+  ): Promise<GenericResponseDto<AuthDataResponseDto>> {
     return this.authService.signUp(signUpRequest);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  @ApiOperation({ summary: 'Get user information by JWT token' })
+  @ApiResponse({
+    status: 200,
+    description: 'User information',
+  })
+  @ApiBearerAuth('JWT Auth Token')
+  public getUser(@Req() request: Request): Promise<GenericResponseDto<User>> {
+    const userPayload = request['user'] as unknown as JwtPayload;
+    return this.authService.me(userPayload);
   }
 }
