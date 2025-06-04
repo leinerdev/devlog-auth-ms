@@ -26,7 +26,7 @@ $ pnpm install
 5. Click on the **Service Accounts** tab.
 6. Click on the **Generate New Private Key** button.
 7. Download the JSON file.
-8. Rename the file to `firebase-credentials.json` and place it in the root directory of the project.
+8. Rename the file to `firebase-admin.json` and place it in the root directory of the project.
 
 ## Compile and run the project
 
