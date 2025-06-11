@@ -1,4 +1,9 @@
-import { Body, Controller, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 
 import { GenericResponseDto } from 'src/common/dto/generic-response.dto';
@@ -11,7 +16,7 @@ import { AuthDataResponseDto } from './dto/auth-data-response.dto';
 
 import { User } from './entities/user.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RpcJwtAuthGuard } from './guards/rpc-jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -31,10 +36,14 @@ export class AuthController {
     return this.authService.signUp(signUpRequest);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(RpcJwtAuthGuard)
   @MessagePattern({ cmd: 'auth_me' })
-  public getUser(@Req() request: Request): Promise<GenericResponseDto<User>> {
-    const userPayload = request['user'] as unknown as JwtPayload;
-    return this.authService.me(userPayload);
+  public getUser(data: {
+    user?: JwtPayload;
+  }): Promise<GenericResponseDto<User>> {
+    if (!data.user) {
+      throw new UnauthorizedException('No user found');
+    }
+    return this.authService.me(data.user);
   }
 }
